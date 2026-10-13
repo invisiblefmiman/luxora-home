@@ -31,6 +31,8 @@ function CheckoutContent() {
     const [idempotencyKey, setIdempotencyKey] = useState<string>("");
 
     const [deliveryType, setDeliveryType] = useState<DeliveryType>("address");
+    const [billingType, setBillingType] = useState<"individual" | "company">("individual");
+    const [gdprConsent, setGdprConsent] = useState<boolean>(true);
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -47,6 +49,9 @@ function CheckoutContent() {
         easyboxId: "",
         easyboxName: "",
         notes: "",
+        companyName: "",
+        cui: "",
+        regCom: "",
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -118,6 +123,20 @@ function CheckoutContent() {
             }
         }
 
+        if (billingType === "company") {
+            if (!formData.companyName.trim()) {
+                newErrors.companyName = "Introduceți denumirea firmei.";
+            }
+            const cleanCui = formData.cui.replace(/^RO/i, "").trim();
+            if (!cleanCui || !/^\d{2,10}$/.test(cleanCui)) {
+                newErrors.cui = "CUI invalid (ex: RO12345678 sau 12345678).";
+            }
+        }
+
+        if (!gdprConsent) {
+            newErrors.gdprConsent = "Trebuie să acceptați Termenii și Condițiile pentru a continua.";
+        }
+
         return newErrors;
     };
 
@@ -139,11 +158,13 @@ function CheckoutContent() {
             const payload = {
                 ...formData,
                 deliveryType,
+                billingType,
                 street: deliveryType === "easybox" ? (formData.street || "Locker Easybox") : formData.street,
                 number: deliveryType === "easybox" ? (formData.number || "Locker") : formData.number,
                 quantity: selectedQuantity,
                 orderBumpIncluded,
                 idempotencyKey,
+                gdprConsent,
             };
 
             const response = await fetch("/api/orders", {
@@ -344,11 +365,92 @@ function CheckoutContent() {
                                 </button>
                             </div>
 
+                            {/* Billing Type Selector (Persoana Fizica vs Juridica) */}
+                            <div className="pt-2">
+                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                                    Tip Facturare
+                                </label>
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setBillingType("individual")}
+                                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${billingType === "individual"
+                                            ? "border-blue-600 bg-blue-50/60 text-blue-900"
+                                            : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                            }`}
+                                    >
+                                        Persoană Fizică
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setBillingType("company")}
+                                        className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${billingType === "company"
+                                            ? "border-blue-600 bg-blue-50/60 text-blue-900"
+                                            : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                            }`}
+                                    >
+                                        Persoană Juridică (Firmă)
+                                    </button>
+                                </div>
+
+                                {billingType === "company" && (
+                                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 mb-4 animate-in fade-in duration-200">
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                                Denumire Companie (SRL / PFA / etc.) *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                name="companyName"
+                                                value={formData.companyName}
+                                                onChange={handleInputChange}
+                                                placeholder="SC Exemplu SRL"
+                                                className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 ${errors.companyName ? "border-red-500 bg-red-50" : "border-slate-300"
+                                                    }`}
+                                            />
+                                            {errors.companyName && <p className="text-red-500 text-xs mt-1">{errors.companyName}</p>}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                                    CUI / Cod Fiscal *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="cui"
+                                                    value={formData.cui}
+                                                    onChange={handleInputChange}
+                                                    placeholder="RO12345678"
+                                                    className={`w-full px-4 py-2.5 rounded-xl border text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600 ${errors.cui ? "border-red-500 bg-red-50" : "border-slate-300"
+                                                        }`}
+                                                />
+                                                {errors.cui && <p className="text-red-500 text-xs mt-1">{errors.cui}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                                                    Nr. Reg. Comerțului (Opțional)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    name="regCom"
+                                                    value={formData.regCom}
+                                                    onChange={handleInputChange}
+                                                    placeholder="J40/1234/2023"
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-600"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Customer Contact & Address Info */}
                             <div className="space-y-4 pt-2">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                                        Nume și Prenume *
+                                        Nume și Prenume (Persoană Contact) *
                                     </label>
                                     <input
                                         type="text"
@@ -666,10 +768,39 @@ function CheckoutContent() {
                                 <span className="text-3xl font-black text-blue-600">{grandTotal.toFixed(2)} lei</span>
                             </div>
 
+                            {/* GDPR Consent Checkbox */}
+                            <div className="pt-2">
+                                <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-600 select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={gdprConsent}
+                                        onChange={(e) => {
+                                            setGdprConsent(e.target.checked);
+                                            if (errors.gdprConsent) {
+                                                setErrors((prev) => ({ ...prev, gdprConsent: "" }));
+                                            }
+                                        }}
+                                        className="mt-0.5 w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                                    />
+                                    <span>
+                                        Sunt de acord cu{" "}
+                                        <a href="/termeni-si-conditii" target="_blank" className="text-blue-600 underline font-semibold hover:text-blue-700">
+                                            Termenii și Condițiile
+                                        </a>{" "}
+                                        și{" "}
+                                        <a href="/politica-de-confidentialitate" target="_blank" className="text-blue-600 underline font-semibold hover:text-blue-700">
+                                            Politica de Confidențialitate
+                                        </a>{" "}
+                                        LUXORA HOME. *
+                                    </span>
+                                </label>
+                                {errors.gdprConsent && <p className="text-red-500 text-xs mt-1 font-semibold">{errors.gdprConsent}</p>}
+                            </div>
+
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className={`w-full min-h-[48px] inline-flex items-center justify-center gap-3 py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-base rounded-2xl shadow-lg shadow-blue-500/25 active:scale-95 touch-manipulation select-none transition-transform uppercase tracking-wide cursor-pointer ${isSubmitting ? "opacity-60 cursor-not-allowed" : ""
+                                disabled={isSubmitting || !gdprConsent}
+                                className={`w-full min-h-[48px] inline-flex items-center justify-center gap-3 py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-base rounded-2xl shadow-lg shadow-blue-500/25 active:scale-95 touch-manipulation select-none transition-transform uppercase tracking-wide cursor-pointer ${isSubmitting || !gdprConsent ? "opacity-60 cursor-not-allowed" : ""
                                     }`}
                             >
                                 <span>{isSubmitting ? "SE PROCESEAZĂ..." : "TRIMITE COMANDA RAMBURS"}</span>

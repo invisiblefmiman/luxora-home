@@ -53,6 +53,31 @@ export function Footer() {
             <div className="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
                 <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                     <p>© {new Date().getFullYear()} {PRODUCT_CONFIG.brandName}. Toate drepturile rezervate.</p>
+                    
+                    {/* Link-uri legale obligatorii ANPC SAL & SOL */}
+                    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 py-1">
+                        <a
+                            href="https://anpc.ro/ce-este-sal/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-colors text-[11px] font-medium"
+                            title="Soluționarea Alternativă a Litigiilor"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>ANPC - SAL</span>
+                        </a>
+                        <a
+                            href="https://ec.europa.eu/consumers/odr"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition-colors text-[11px] font-medium"
+                            title="Soluționarea Online a Litigiilor"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>ANPC - SOL</span>
+                        </a>
+                    </div>
+
                     <div className="flex items-center gap-4 text-xs">
                         <span>Plată securizată</span>
                         <span>•</span>

@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { getSupabaseServerClient } from "@/lib/supabase";
 import { checkRateLimit } from "@/lib/ratelimit";
+
+function safeCompare(provided: string, expected: string): boolean {
+    try {
+        const bufA = Buffer.from(provided);
+        const bufB = Buffer.from(expected);
+        if (bufA.length !== bufB.length) {
+            // Constant-time dummy comparison to mitigate length timing attacks
+            crypto.timingSafeEqual(bufA, bufA);
+            return false;
+        }
+        return crypto.timingSafeEqual(bufA, bufB);
+    } catch {
+        return false;
+    }
+}
 
 function checkAdminAuth(request: Request): boolean {
     const adminPassword = process.env.ADMIN_PASSWORD;
@@ -11,12 +27,23 @@ function checkAdminAuth(request: Request): boolean {
     const authHeader = request.headers.get("authorization");
     const cookieHeader = request.headers.get("cookie") || "";
 
-    if (authHeader === `Bearer ${adminPassword}`) {
-        return true;
+    // 1. Check Bearer token in header
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.slice(7).trim();
+        if (safeCompare(token, adminPassword)) {
+            return true;
+        }
     }
 
-    if (cookieHeader.includes(`luxora_admin_token=${adminPassword}`)) {
-        return true;
+    // 2. Check Cookie token
+    if (cookieHeader) {
+        const match = cookieHeader.match(/luxora_admin_token=([^;]+)/);
+        if (match && match[1]) {
+            const cookieToken = decodeURIComponent(match[1]).trim();
+            if (safeCompare(cookieToken, adminPassword)) {
+                return true;
+            }
+        }
     }
 
     return false;
@@ -59,6 +86,14 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+    const forwarded = request.headers.get("x-forwarded-for");
+    const clientIp = (forwarded ? forwarded.split(",")[0] : request.headers.get("x-real-ip")) || "127.0.0.1";
+
+    const rateLimitRes = await checkRateLimit(`admin-patch-${clientIp}`, 30, 60000);
+    if (!rateLimitRes.success) {
+        return NextResponse.json({ success: false, error: "Prea multe operațiuni. Așteptați un minut." }, { status: 429 });
+    }
+
     if (!checkAdminAuth(request)) {
         return NextResponse.json({ success: false, error: "Neautorizat." }, { status: 401 });
     }

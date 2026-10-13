@@ -1,6 +1,16 @@
 import { Resend } from "resend";
 import { PRODUCT_CONFIG } from "@/config/product";
 
+function escapeHtml(text?: string | null): string {
+    if (!text) return "";
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 interface OrderNotificationParams {
     orderNumber: string;
     createdAt: string;
@@ -33,20 +43,27 @@ export async function sendOrderNotificationEmail(order: OrderNotificationParams)
         const fromEmail = process.env.RESEND_FROM_EMAIL || "comenzi@luxorahome.ro";
         const adminUrl = process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/admin` : "/admin";
 
+        const safeCustomerName = escapeHtml(order.customerName);
+        const safePhone = escapeHtml(order.phone);
+        const safeEmail = escapeHtml(order.email);
+        const safeAddress = escapeHtml(order.address);
+        const safeNotes = escapeHtml(order.notes);
+        const safeProductName = escapeHtml(order.productName);
+
         const emailContent = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
-    <h2 style="color: #2563eb; margin-top: 0;">🎉 Comanda noua inregistrata: ${order.orderNumber}</h2>
+    <h2 style="color: #2563eb; margin-top: 0;">🎉 Comanda noua inregistrata: ${escapeHtml(order.orderNumber)}</h2>
     <p style="color: #64748b; font-size: 14px;"><strong>Data:</strong> ${new Date(order.createdAt).toLocaleString("ro-RO")}</p>
 
     <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h3 style="margin-top: 0; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">Date Client:</h3>
         <ul style="list-style: none; padding-left: 0; margin-bottom: 0; line-height: 1.6; color: #334155;">
-            <li><strong>Nume:</strong> ${order.customerName}</li>
-            <li><strong>Telefon:</strong> <a href="tel:${order.phone}" style="color: #2563eb; font-weight: bold;">${order.phone}</a></li>
-            <li><strong>Email:</strong> ${order.email || "Nespecificat"}</li>
-            <li><strong>Adresa Livrare:</strong> ${order.address}</li>
-            ${order.notes ? `<li><strong>Observatii:</strong> ${order.notes}</li>` : ""}
-            ${order.clientIp ? `<li><strong>IP Client:</strong> ${order.clientIp}</li>` : ""}
+            <li><strong>Nume:</strong> ${safeCustomerName}</li>
+            <li><strong>Telefon:</strong> <a href="tel:${safePhone}" style="color: #2563eb; font-weight: bold;">${safePhone}</a></li>
+            <li><strong>Email:</strong> ${safeEmail || "Nespecificat"}</li>
+            <li><strong>Adresa Livrare:</strong> ${safeAddress}</li>
+            ${order.notes ? `<li><strong>Observatii:</strong> ${safeNotes}</li>` : ""}
+            ${order.clientIp ? `<li><strong>IP Client:</strong> ${escapeHtml(order.clientIp)}</li>` : ""}
         </ul>
     </div>
 

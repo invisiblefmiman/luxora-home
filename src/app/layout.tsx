@@ -64,8 +64,67 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const schemaData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${baseUrl}/#organization`,
+        "name": "LUXORA HOME",
+        "url": baseUrl,
+        "logo": `${baseUrl}/hero-product.png`,
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+40770123456",
+          "contactType": "customer service",
+          "areaServed": "RO",
+          "availableLanguage": "Romanian",
+        },
+      },
+      {
+        "@type": "Product",
+        "@id": `${baseUrl}/#product`,
+        "name": "Perie electrică rotativă de curățare 5-în-1 LUXORA HOME",
+        "description": "Peria electrică rotativă reîncărcabilă cu 5 capete interschimbabile pentru curățarea fără efort a băii, bucătăriei, faianței și aragazului.",
+        "brand": {
+          "@type": "Brand",
+          "name": "LUXORA HOME",
+        },
+        "image": [
+          `${baseUrl}/hero-product.png`,
+          `${baseUrl}/attachments.png`,
+          `${baseUrl}/after-tile.png`
+        ],
+        "sku": "LXH-SCRUB-5IN1",
+        "offers": {
+          "@type": "Offer",
+          "url": `${baseUrl}/comanda`,
+          "priceCurrency": "RON",
+          "price": "119.90",
+          "priceValidUntil": "2027-12-31",
+          "itemCondition": "https://schema.org/NewCondition",
+          "availability": "https://schema.org/InStock",
+          "seller": {
+            "@id": `${baseUrl}/#organization`
+          }
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "128"
+        }
+      }
+    ]
+  };
+
   return (
     <html lang="ro" className={`${inter.variable} h-full antialiased scroll-smooth overflow-x-hidden`}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col font-sans transition-colors duration-300 overflow-x-hidden w-full">
         <Analytics />
         {children}

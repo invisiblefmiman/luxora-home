@@ -70,13 +70,17 @@ export async function createSmartBillInvoice(order: OrderRecord): Promise<Genera
             ? `Locker Easybox ${order.easybox_name || order.easybox_id || ""}, ${order.city}`
             : `Str. ${order.street} nr. ${order.number}, ${order.city}`;
 
+        const isCompany = order.billing_type === "company" && !!order.company_name;
+        const clientName = isCompany ? (order.company_name || order.customer_name) : order.customer_name;
+        const clientVat = isCompany ? (order.cui || "").toUpperCase().trim() : "";
+
         const payload: SmartBillInvoicePayload = {
             companyVatCode: cif,
             issueDate: new Date().toISOString().slice(0, 10),
             seriesName: series,
             client: {
-                name: order.customer_name,
-                vatCode: "",
+                name: clientName,
+                vatCode: clientVat,
                 address: addressStr,
                 city: order.city,
                 county: order.county,

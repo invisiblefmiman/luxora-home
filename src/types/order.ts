@@ -21,6 +21,10 @@ export interface OrderFormData {
     paymentMethod: "cod";
     notes?: string;
     idempotencyKey?: string;
+    billingType?: "individual" | "company";
+    companyName?: string;
+    cui?: string;
+    regCom?: string;
 }
 
 export interface OrderRecord {
@@ -48,6 +52,10 @@ export interface OrderRecord {
     total_price: number;
     payment_method: string;
     status: OrderStatus;
+    billing_type?: "individual" | "company" | null;
+    company_name?: string | null;
+    cui?: string | null;
+    reg_com?: string | null;
     awb_number?: string | null;
     carrier_name?: string | null;
     invoice_number?: string | null;

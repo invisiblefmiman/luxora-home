@@ -33,6 +33,15 @@ const orderSchema = z.object({
     quantity: z.number().int().min(1).max(3),
     orderBumpIncluded: z.boolean().optional().default(false),
     idempotencyKey: z.string().trim().optional(),
+    billingType: z.enum(["individual", "company"]).default("individual"),
+    companyName: z.string().trim().optional(),
+    cui: z.string().trim().optional().refine((val) => {
+        if (!val) return true;
+        const clean = val.replace(/^RO/i, "").trim();
+        return /^\d{2,10}$/.test(clean);
+    }, "Codul fiscal / CUI este nevalid (ex: RO12345678 sau 12345678)."),
+    regCom: z.string().trim().optional(),
+    gdprConsent: z.boolean().refine((val) => val === true, "Trebuie să acceptați Termenii și Condițiile și Politica de Confidențialitate pentru a plasa comanda.").optional().default(true),
 });
 
 export async function POST(request: Request) {
@@ -134,6 +143,10 @@ export async function POST(request: Request) {
             total_price: totalPrice,
             payment_method: "cod",
             status: "new",
+            billing_type: data.billingType,
+            company_name: data.billingType === "company" ? (data.companyName || null) : null,
+            cui: data.billingType === "company" ? (data.cui || null) : null,
+            reg_com: data.billingType === "company" ? (data.regCom || null) : null,
             idempotency_key: data.idempotencyKey || null,
             client_ip: clientIp,
             notes: data.notes || null,
