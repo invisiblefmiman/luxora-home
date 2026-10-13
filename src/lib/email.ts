@@ -70,7 +70,7 @@ export async function sendOrderNotificationEmail(order: OrderNotificationParams)
     <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
         <h3 style="margin-top: 0; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px;">Detaliu Colet:</h3>
         <ul style="list-style: none; padding-left: 0; margin-bottom: 0; line-height: 1.6; color: #334155;">
-            <li><strong>Produs:</strong> ${order.productName}</li>
+            <li><strong>Produs:</strong> ${safeProductName}</li>
             <li><strong>Pachet / Cantitate:</strong> ${order.quantity} buc.</li>
             <li><strong>Order Bump (Capete rezerva 29.90 lei):</strong> ${order.orderBumpIncluded ? "<span style='color: #16a34a; font-weight: bold;'>DA (+29.90 lei)</span>" : "NU"}</li>
             <li><strong>Taxa livrare:</strong> ${order.shippingFee === 0 ? "<span style='color: #16a34a; font-weight: bold;'>GRATUIT</span>" : `${order.shippingFee.toFixed(2)} lei`}</li>

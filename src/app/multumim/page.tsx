@@ -35,8 +35,43 @@ interface SavedOrder {
 
 declare global {
     interface Window {
-        fbq?: any;
-        ttq?: any;
+        fbq?: (
+            command: string,
+            eventType: string,
+            parameters?: Record<string, unknown>,
+            options?: { eventID?: string }
+        ) => void;
+        ttq?: {
+            track: (
+                eventName: string,
+                parameters?: Record<string, unknown>,
+                options?: { event_id?: string }
+            ) => void;
+            page?: () => void;
+        };
+    }
+}
+
+function triggerPixelEvents(ord: SavedOrder) {
+    if (typeof window !== "undefined") {
+        // Meta Pixel Purchase Event with eventID deduplication
+        if (typeof window.fbq === "function") {
+            window.fbq("track", "Purchase", {
+                value: ord.totalPrice,
+                currency: "RON",
+                content_name: ord.productName,
+                order_id: ord.orderNumber,
+            }, { eventID: ord.orderNumber });
+        }
+        // TikTok Pixel PlaceAnOrder Event
+        if (window.ttq && typeof window.ttq.track === "function") {
+            window.ttq.track("PlaceAnOrder", {
+                value: ord.totalPrice,
+                currency: "RON",
+                content_name: ord.productName,
+                order_id: ord.orderNumber,
+            });
+        }
     }
 }
 
@@ -46,13 +81,34 @@ function ThankYouContent() {
     const [order, setOrder] = useState<SavedOrder | null>(null);
 
     useEffect(() => {
-        try {
-            const cached = localStorage.getItem("luxora_last_order");
-            if (cached) {
-                const parsed: SavedOrder = JSON.parse(cached);
-                if (!orderParam || parsed.orderNumber === orderParam) {
-                    setOrder(parsed);
-                    triggerPixelEvents(parsed);
+        const timer = setTimeout(() => {
+            try {
+                const cached = localStorage.getItem("luxora_last_order");
+                if (cached) {
+                    const parsed: SavedOrder = JSON.parse(cached);
+                    if (!orderParam || parsed.orderNumber === orderParam) {
+                        setOrder(parsed);
+                        triggerPixelEvents(parsed);
+                    } else if (orderParam) {
+                        const fallbackOrder: SavedOrder = {
+                            orderNumber: orderParam,
+                            createdAt: new Date().toISOString(),
+                            fullName: "Client Luxora Home",
+                            phone: "",
+                            county: "",
+                            city: "",
+                            street: "",
+                            number: "",
+                            quantity: 1,
+                            productName: "Perie electrică rotativă 5-in-1",
+                            unitPrice: 119.9,
+                            shippingFee: 0,
+                            totalPrice: 119.9,
+                            paymentMethod: "cod",
+                        };
+                        setOrder(fallbackOrder);
+                        triggerPixelEvents(fallbackOrder);
+                    }
                 } else if (orderParam) {
                     const fallbackOrder: SavedOrder = {
                         orderNumber: orderParam,
@@ -73,53 +129,12 @@ function ThankYouContent() {
                     setOrder(fallbackOrder);
                     triggerPixelEvents(fallbackOrder);
                 }
-            } else if (orderParam) {
-                const fallbackOrder: SavedOrder = {
-                    orderNumber: orderParam,
-                    createdAt: new Date().toISOString(),
-                    fullName: "Client Luxora Home",
-                    phone: "",
-                    county: "",
-                    city: "",
-                    street: "",
-                    number: "",
-                    quantity: 1,
-                    productName: "Perie electrică rotativă 5-in-1",
-                    unitPrice: 119.9,
-                    shippingFee: 0,
-                    totalPrice: 119.9,
-                    paymentMethod: "cod",
-                };
-                setOrder(fallbackOrder);
-                triggerPixelEvents(fallbackOrder);
+            } catch (e) {
+                console.error("Eroare citire local storage order:", e);
             }
-        } catch (e) {
-            console.error("Eroare citire local storage order:", e);
-        }
+        }, 0);
+        return () => clearTimeout(timer);
     }, [orderParam]);
-
-    const triggerPixelEvents = (ord: SavedOrder) => {
-        if (typeof window !== "undefined") {
-            // Meta Pixel Purchase Event with eventID deduplication
-            if (window.fbq) {
-                window.fbq("track", "Purchase", {
-                    value: ord.totalPrice,
-                    currency: "RON",
-                    content_name: ord.productName,
-                    order_id: ord.orderNumber,
-                }, { eventID: ord.orderNumber });
-            }
-            // TikTok Pixel PlaceAnOrder Event
-            if (window.ttq) {
-                window.ttq.track("PlaceAnOrder", {
-                    value: ord.totalPrice,
-                    currency: "RON",
-                    content_name: ord.productName,
-                    order_id: ord.orderNumber,
-                });
-            }
-        }
-    };
 
     return (
         <main className="flex-grow py-12 lg:py-16">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PRODUCT_CONFIG } from "@/config/product";
-import { ArrowRight, Check, ShieldCheck, Truck, Clock } from "lucide-react";
+import { ArrowRight, ShieldCheck, Truck, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function OfferCard() {

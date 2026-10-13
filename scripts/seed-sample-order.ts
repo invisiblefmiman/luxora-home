@@ -44,7 +44,7 @@ async function seedSampleOrder() {
         created_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase.from("orders").insert([sampleOrder]).select();
+    const { error } = await supabase.from("orders").insert([sampleOrder]);
 
     if (error) {
         console.error("❌ Eroare la inserarea comenzii de test în Supabase:", error.message);

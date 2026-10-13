@@ -9,7 +9,7 @@ async function runE2ETests() {
     let failedTests = 0;
 
     // Helper to simulate Next.js Request
-    function createMockRequest(body: any, headersRecord: Record<string, string> = {}): Request {
+    function createMockRequest(body: unknown, headersRecord: Record<string, string> = {}): Request {
         return new Request("http://localhost:3000/api/orders", {
             method: "POST",
             headers: {

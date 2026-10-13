@@ -10,7 +10,8 @@ export function CookieBanner() {
     useEffect(() => {
         const consent = localStorage.getItem("luxora_cookie_consent");
         if (!consent) {
-            setIsVisible(true);
+            const timer = setTimeout(() => setIsVisible(true), 0);
+            return () => clearTimeout(timer);
         }
     }, []);
 

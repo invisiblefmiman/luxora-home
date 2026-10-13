@@ -1,7 +1,7 @@
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { PRODUCT_CONFIG } from "@/config/product";
-import { Truck, Clock, ShieldCheck, MapPin } from "lucide-react";
+import { Truck, Clock, ShieldCheck } from "lucide-react";
 
 export default function LivrarePage() {
     return (

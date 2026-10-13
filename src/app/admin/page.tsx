@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { OrderRecord, OrderStatus } from "@/types/order";
-import { Lock, Search, RefreshCw, Save, LogOut, FileText, Truck, Download, FileCheck, Info, MessageSquare, PhoneCall, AlertTriangle, Box } from "lucide-react";
+import { Lock, Search, RefreshCw, Save, LogOut, FileText, Truck, Download, FileCheck, Info, MessageSquare, PhoneCall, AlertTriangle, Box, Building2 } from "lucide-react";
 
 export default function AdminDashboardPage() {
     const [password, setPassword] = useState("");
@@ -15,22 +15,7 @@ export default function AdminDashboardPage() {
     const [editingAwbs, setEditingAwbs] = useState<Record<string, string>>({});
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
-    useEffect(() => {
-        const savedToken = localStorage.getItem("luxora_admin_token");
-        if (savedToken) {
-            setPassword(savedToken);
-            setIsAuthenticated(true);
-            fetchOrders(savedToken);
-        }
-    }, []);
-
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        setAuthError("");
-        fetchOrders(password);
-    };
-
-    const fetchOrders = async (authToken: string) => {
+    const fetchOrders = useCallback(async (authToken: string) => {
         setIsLoading(true);
         try {
             const res = await fetch("/api/admin/orders", {
@@ -47,12 +32,29 @@ export default function AdminDashboardPage() {
                 setAuthError(data.error || "Parolă incorectă.");
                 setIsAuthenticated(false);
             }
-        } catch (err) {
+        } catch {
             setAuthError("A apărut o eroare la conectare.");
             setIsAuthenticated(false);
         } finally {
             setIsLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        const savedToken = localStorage.getItem("luxora_admin_token");
+        if (savedToken) {
+            const timer = setTimeout(() => {
+                setPassword(savedToken);
+                fetchOrders(savedToken);
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [fetchOrders]);
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setAuthError("");
+        fetchOrders(password);
     };
 
     const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
@@ -77,7 +79,7 @@ export default function AdminDashboardPage() {
             } else {
                 alert("Eroare la actualizarea statusului: " + data.error);
             }
-        } catch (err) {
+        } catch {
             alert("Eroare la actualizarea statusului.");
         } finally {
             setUpdatingId(null);
@@ -107,7 +109,7 @@ export default function AdminDashboardPage() {
                 alert("Eroare generare AWB Sameday: " + (data.error || "A apărut o eroare"));
                 fetchOrders(password);
             }
-        } catch (err) {
+        } catch {
             alert("A apărut o eroare la generarea AWB Sameday.");
         } finally {
             setUpdatingId(null);
@@ -133,7 +135,7 @@ export default function AdminDashboardPage() {
                 alert("Eroare emitere factură: " + (data.error || "A apărut o eroare"));
                 fetchOrders(password);
             }
-        } catch (err) {
+        } catch {
             alert("A apărut o eroare la emiterea facturii.");
         } finally {
             setUpdatingId(null);
@@ -167,7 +169,7 @@ export default function AdminDashboardPage() {
             } else {
                 alert("Eroare la salvarea AWB-ului: " + data.error);
             }
-        } catch (err) {
+        } catch {
             alert("Eroare la salvarea AWB-ului.");
         } finally {
             setUpdatingId(null);
@@ -391,6 +393,16 @@ export default function AdminDashboardPage() {
                                                 <td className="p-4">
                                                     <div className="font-bold text-slate-900">{order.customer_name}</div>
                                                     <div className="text-blue-600 font-semibold">{order.phone}</div>
+                                                    {order.billing_type === "company" && (
+                                                        <div className="mt-1 p-1.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-900">
+                                                            <div className="font-bold flex items-center gap-1 text-amber-800">
+                                                                <Building2 className="w-3 h-3 text-amber-600 shrink-0" />
+                                                                <span>PJ / B2B:</span> {order.company_name || "Companie nespecificată"}
+                                                            </div>
+                                                            {order.cui && <div className="text-[10px] text-amber-800 font-mono">CUI: {order.cui}</div>}
+                                                            {order.reg_com && <div className="text-[10px] text-slate-500 font-mono">Reg. Com: {order.reg_com}</div>}
+                                                        </div>
+                                                    )}
                                                     <div className="text-[11px] text-slate-500 mt-1 max-w-xs">
                                                         {order.delivery_type === "easybox" ? (
                                                             <span className="text-blue-700 font-semibold flex items-center gap-1">

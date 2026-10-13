@@ -28,7 +28,7 @@ function CheckoutContent() {
     const [orderBumpIncluded, setOrderBumpIncluded] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const [idempotencyKey, setIdempotencyKey] = useState<string>("");
+    const [idempotencyKey] = useState<string>(() => generateUUID());
 
     const [deliveryType, setDeliveryType] = useState<DeliveryType>("address");
     const [billingType, setBillingType] = useState<"individual" | "company">("individual");
@@ -57,15 +57,13 @@ function CheckoutContent() {
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        const txId = generateUUID();
-        setIdempotencyKey(txId);
         // Trimitere eveniment de initiere checkout catre Google Analytics, Meta Pixel si TikTok Pixel
         trackEvent("InitiateCheckout", {
             content_name: PRODUCT_CONFIG.name,
             currency: "RON",
             value: PRODUCT_CONFIG.bundles[0].price,
-        }, txId);
-    }, []);
+        }, idempotencyKey);
+    }, [idempotencyKey]);
 
     const availableEasyboxes = getEasyboxesForLocation(formData.county, formData.city);
 
